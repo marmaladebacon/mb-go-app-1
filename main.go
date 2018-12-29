@@ -19,9 +19,11 @@ var (
 	BuiltAt string
 	debug   = flag.Bool("d", false, "enables the debug mode")
 	w       *astilectron.Window
+	app     *astilectron.Astilectron
 )
 
-var onWait = func(_ *astilectron.Astilectron, ws []*astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
+var onWait = func(appPointer *astilectron.Astilectron, ws []*astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
+	app = appPointer
 	w = ws[0]
 	go func() {
 		time.Sleep(5 * time.Second)
@@ -56,7 +58,14 @@ func getMenuOptions() []*astilectron.MenuItemOptions {
 					return
 				},
 			},
-			{Role: astilectron.MenuItemRoleClose},
+			{
+				Label: astilectron.PtrStr("Close App"),
+				OnClick: func(e astilectron.Event) (deleteListener bool) {
+					app.Quit()
+					return
+				},
+			},
+			//{Role: astilectron.MenuItemRoleClose},
 		},
 	}}
 }
