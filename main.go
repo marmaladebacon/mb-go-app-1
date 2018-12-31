@@ -15,22 +15,36 @@ import (
 const htmlAbout = `<b>Astilectron</b> demo base MarmaladeBacon test!<br>`
 
 var (
-	AppName string
-	BuiltAt string
-	debug   = flag.Bool("d", false, "enables the debug mode")
-	w       *astilectron.Window
-	app     *astilectron.Astilectron
+	AppName       string
+	BuiltAt       string
+	debug         = flag.Bool("d", false, "enables the debug mode")
+	primaryWindow *astilectron.Window
+	app           *astilectron.Astilectron
+	quitChannel   chan struct{}
 )
 
 var onWait = func(appPointer *astilectron.Astilectron, ws []*astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
 	app = appPointer
-	w = ws[0]
+	primaryWindow = ws[0]
+
 	go func() {
-		time.Sleep(5 * time.Second)
-		if err := bootstrap.SendMessage(w, "check.out.menu", "Don't forget to check out the menu!"); err != nil {
+		primaryWindow.OpenDevTools()
+		time.Sleep(1 * time.Second)
+		if err := bootstrap.SendMessage(primaryWindow, "check.out.menu", "Don't forget to check out the menu!"); err != nil {
 			astilog.Error(errors.Wrap(err, "sending check.out.menu event failed"))
 		}
+
 	}()
+	quitChannel := make(chan struct{})
+	time.Sleep(1 * time.Second)
+	pollForSymbol("aapl", quitChannel, primaryWindow, 3000)
+	time.Sleep(1 * time.Second)
+	pollForSymbol("fds", quitChannel, primaryWindow, 2000)
+	setInterval(func() {
+		if err := bootstrap.SendMessage(primaryWindow, "time.test", time.Now().Format(time.UnixDate)); err != nil {
+			astilog.Error(errors.Wrap(err, "sending time.test event failed"))
+		}
+	}, 500, quitChannel)
 	return nil
 }
 
@@ -51,7 +65,7 @@ func getMenuOptions() []*astilectron.MenuItemOptions {
 			{
 				Label: astilectron.PtrStr("About"),
 				OnClick: func(e astilectron.Event) (deleteListener bool) {
-					if err := bootstrap.SendMessage(w,
+					if err := bootstrap.SendMessage(primaryWindow,
 						"about", htmlAbout, sendMsgErrorFunc); err != nil {
 						astilog.Error(errors.Wrap(err, "sending about event failed"))
 					}

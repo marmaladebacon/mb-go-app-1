@@ -36,3 +36,8 @@ Example
 ```
 go test github.com/user/stringutil
 ```
+
+
+# Developer notes
+
+the app *astilectron.Astilectron is set in the onWait function

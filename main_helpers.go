@@ -5,10 +5,9 @@ import (
 	"time"
 )
 
-func setInterval(funcToLoop func(), timeInMs int) chan struct{} {
+func setInterval(funcToLoop func(), timeInMs int, quitChannel chan struct{}) {
 	interval := time.Duration(timeInMs) * time.Millisecond
 	ticker := time.NewTicker(interval)
-	quit := make(chan struct{})
 
 	go func() {
 		for {
@@ -16,12 +15,12 @@ func setInterval(funcToLoop func(), timeInMs int) chan struct{} {
 			case <-ticker.C:
 				funcToLoop()
 				fmt.Println(time.Now())
-			case <-quit:
+			case <-quitChannel:
 				ticker.Stop()
 				fmt.Println("Stopped the ticker!")
 				return
 			}
 		}
 	}()
-	return quit
+
 }
